@@ -29,13 +29,12 @@ stateOfMind :: BotBrain -> IO (Phrase -> Phrase)
 {- TO BE WRITTEN -}
 stateOfMind _ = return id
 
-rulesApply :: [PhrasePair] -> Phrase -> Phrase
-{- TO BE WRITTEN -}
-rulesApply _ = id
+rulesApply :: [PhrasePair] -> Phrase -> Phrase	
+rulesApply f t = try (transformationsApply "*" reflect f) t
 
 reflect :: Phrase -> Phrase
-{- TO BE WRITTEN -}
-reflect = id
+reflect [] = []
+reflect (p:ps) = try (flip lookup reflections) p: reflect ps
 
 reflections =
   [ ("am",     "are"),
@@ -156,7 +155,7 @@ frenchPresentations = [("My name is ", "Je m'appelle "), ("FUCK ", "Tits ")]
 
 -- Applying a list of patterns until one succeeds
 transformationsApply :: Eq a => a -> ([a] -> [a]) -> [([a], [a])] -> [a] -> Maybe [a]
-transformationsApply wc f [] t = Nothing
-transformationsApply wc f (p:ps) l 
+transformationsApply _ _ [] _ = Nothing
+transformationsApply wc f (p:ps) l
 	|	transformationApply wc f l p == Nothing = transformationsApply wc f ps l
 	|	otherwise = transformationApply wc f l p

@@ -58,6 +58,7 @@ rulesApply :: [PhrasePair] -> Phrase -> Phrase
 
 reflect :: Phrase -> Phrase
 reflect [] = []
-reflect (x:xs) = orElse lookup ++ reflect (xs)
+reflect (x:xs) |
+
 
 rulesApply (a, b) = transformationApply
