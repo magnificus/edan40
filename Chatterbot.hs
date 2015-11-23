@@ -23,12 +23,20 @@ type PhrasePair = (Phrase, Phrase)
 type BotBrain = [(Phrase, [Phrase])]
 
 
---------------------------------------------------------
+----------------------------------------------------	----
+rollDice :: IO ()
+rollDice = do
+   r <- randomIO :: IO Float
+   putStrLn ("You rolled " ++ show (floor (6*r+1)))
+
 
 stateOfMind :: BotBrain -> IO (Phrase -> Phrase)
-{- TO BE WRITTEN -}
-stateOfMind _ = return id
+	
+stateOfMind a = do
+	r <- randomIO :: IO Float
+	return (rulesApply (map (map2 (id, pick r)) a))
 
+  
 rulesApply :: [PhrasePair] -> Phrase -> Phrase	
 rulesApply f t = try (transformationsApply "*" reflect f) t
 
@@ -68,8 +76,9 @@ prepare :: String -> Phrase
 prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|") 
 
 rulesCompile :: [(String, [String])] -> BotBrain
-{- TO BE WRITTEN -}
-rulesCompile _ = []
+rulesCompile x = map (\(a, b) -> (l a, map l b)) x
+	where l a = words (map toLower a)
+
 
 
 --------------------------------------
