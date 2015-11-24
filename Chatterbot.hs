@@ -23,26 +23,22 @@ type PhrasePair = (Phrase, Phrase)
 type BotBrain = [(Phrase, [Phrase])]
 
 
-----------------------------------------------------	----
-rollDice :: IO ()
-rollDice = do
-   r <- randomIO :: IO Float
-   putStrLn ("You rolled " ++ show (floor (6*r+1)))
+-------------------------------------------------------
 
 
 stateOfMind :: BotBrain -> IO (Phrase -> Phrase)
 	
 stateOfMind a = do
 	r <- randomIO :: IO Float
-	return (rulesApply (map (map2 (id, pick r)) a))
+	return $ rulesApply $ map (map2 (id, pick r)) a
 
   
 rulesApply :: [PhrasePair] -> Phrase -> Phrase	
-rulesApply f t = try (transformationsApply "*" reflect f) t
+rulesApply = try . transformationsApply "*" reflect
 
 reflect :: Phrase -> Phrase
 reflect [] = []
-reflect (p:ps) = try (flip lookup reflections) p: reflect ps
+reflect (p:ps) = try (flip lookup reflections) p : reflect ps
 
 reflections =
   [ ("am",     "are"),
@@ -76,8 +72,8 @@ prepare :: String -> Phrase
 prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|") 
 
 rulesCompile :: [(String, [String])] -> BotBrain
-rulesCompile x = map (\(a, b) -> (l a, map l b)) x
-	where l a = words (map toLower a)
+rulesCompile = map (\(a, b) -> (l a, map l b))
+	where l = words . map toLower
 
 
 
@@ -103,8 +99,7 @@ reduce :: Phrase -> Phrase
 reduce = reductionsApply reductions
 
 reductionsApply :: [PhrasePair] -> Phrase -> Phrase
-{- TO BE WRITTEN -}
-reductionsApply _ = id
+reductionsApply = fix . rulesApply
 
 
 -------------------------------------------------------
@@ -137,34 +132,15 @@ longerWildcardMatch (wc:ps) (s:ss) = mmap (s:) (match wc (wc:ps) ss)
 singleWildcardMatch (wc:ps) (s:ss) = match wc ps ss >> return [s]
 
 
-
--- Test cases --------------------
-
-testPattern =  "a=*;"
-testSubstitutions = "32"
-testString = "a=32;"
-
-substituteTest = substitute '*' testPattern testSubstitutions
-substituteCheck = substituteTest == testString
-
-matchTest = match '*' testPattern testString
-matchCheck = matchTest == Just testSubstitutions
-
-
-
--------------------------------------------------------
+------
 -- Applying patterns
 --------------------------------------------------------
 
 -- Applying a single pattern
 transformationApply :: Eq a => a -> ([a] -> [a]) -> [a] -> ([a], [a]) -> Maybe [a]
-transformationApply wc f s map = mmap (substitute wc (snd map)) (mmap f (match wc (fst map) s))
-
-frenchPresentations = [("My name is ", "Je m'appelle "), ("FUCK ", "Tits ")]
+transformationApply wc f s map = mmap (substitute wc $ snd map) (mmap f $ match wc (fst map) s)
 
 -- Applying a list of patterns until one succeeds
 transformationsApply :: Eq a => a -> ([a] -> [a]) -> [([a], [a])] -> [a] -> Maybe [a]
 transformationsApply _ _ [] _ = Nothing
-transformationsApply wc f (p:ps) l
-	|	transformationApply wc f l p == Nothing = transformationsApply wc f ps l
-	|	otherwise = transformationApply wc f l p
+transformationsApply wc f (p:ps) l = orElse (transformationApply wc f l p) (transformationsApply wc f ps l)
