@@ -1,7 +1,3 @@
-import Data.Char
-import Data.List
-import Data.Ord
-
 type AlignmentType = (String,String)
 type AlTypeType = (Int, [AlignmentType])
 
@@ -13,16 +9,11 @@ scoreSpace = -1
 string1 = "writers"
 string2 = "vintner"
 
-al = (string1, string2)
 
-alT = (4 :: Int, [al])
+oldSimilarityScore (x:xs) (y:ys) = maximum [(similarityScore xs ys + score x y), (similarityScore (x:xs) ys + score '-' y), (similarityScore xs (y:ys) + score x '-')]
 
-optimalAlignments :: Int -> Int -> Int -> String -> String -> [AlignmentType]
-optimalAlignments _ _ _ _ _ = [("fuck", "off")]
 
-correctForm f (a, b) = f a b
-
-similarityScore :: Eq a => [a] -> [a] -> Int
+similarityScore :: String -> String -> Int
 similarityScore xs ys = simScore (length xs) (length ys)
   where
     simScore i j = mcsTable!!i!!j
@@ -30,10 +21,8 @@ similarityScore xs ys = simScore (length xs) (length ys)
     mcsEntry :: Int -> Int -> Int
     mcsEntry x 0 = x * scoreSpace
     mcsEntry 0 y = y * scoreSpace
-    mcsEntry i j
-      | x == y  = scoreMatch + simScore (i-1) (j-1)
-      | otherwise = maximum [(simScore i (j-1) + scoreSpace),
-                        (simScore (i-1) j + scoreSpace), (simScore (i-1) (j-1) + scoreMismatch)]
+    mcsEntry i j = maximum [simScore i (j-1) + score '-' x,
+                        simScore (i-1) j + score x '-', simScore (i-1) (j-1) + score x y]
       where
          x = xs!!(i-1)
          y = ys!!(j-1)
@@ -45,8 +34,8 @@ optAlignments xs ys = optAl (length xs) (length ys)
     optAl i j = mcsTable!!i!!j
     mcsTable = [[ mcsEntry i j | j<-[0..]] | i<-[0..]]
     mcsEntry :: Int -> Int -> AlTypeType
-    mcsEntry x 0 = (x * scoreSpace, [("", minuses x)])
-    mcsEntry 0 y = (y * scoreSpace, [(minuses y, "")])
+    mcsEntry x 0 = (x * scoreSpace, [(take x xs, minuses x)])
+    mcsEntry 0 y = (y * scoreSpace, [(minuses y, take y ys)])
     mcsEntry i j = mergeAlternatives $ maximaBy fst $ [createAlternative (optAl (i-1) (j-1)) (score x y) x y, createAlternative (optAl i (j-1)) (score '-' y) '-' y,
                         createAlternative (optAl (i-1) j) (score x '-') x '-']
       where
@@ -66,16 +55,22 @@ score x y
 
 minuses = flip replicate '-'
 
+
 combinations :: String -> String -> [AlignmentType]
 combinations x [] = [(x, minuses (length x))]
 combinations [] y = [(minuses (length y) ,y )]
 combinations (x:xs) (y:ys) = attachHeads x y (combinations xs ys) ++ attachHeads x '-' (combinations xs (y:ys)) ++ attachHeads '-' y (combinations (x:xs) ys)
- 
 
 addpossible :: Char -> Char -> [AlignmentType] -> [AlignmentType]
 addpossible x y zs
   | zs == [] = [([x],[y]),([x], ['-']), (['-'], [y])]
   | otherwise = attachHeads x y zs ++ attachHeads x '-' zs ++ attachHeads '-' y zs
+  
+oldOptAlignments :: String -> String -> [AlignmentType]
+oldOptAlignments [] _ = [("","")]
+oldOptAlignments _ [] = [("","")]
+oldOptAlignments s1 s2 = [x | x <- combinations s1 s2, ((\f (a,b) -> f a b) similarityScore x) == similarityScore s1 s2]
+
 
 attachHeads :: a -> a -> [([a],[a])] -> [([a],[a])]
 attachHeads h1 h2 aList = [(h1:xs,h2:ys) | (xs,ys) <- aList]
@@ -87,11 +82,6 @@ maximaBy :: Ord b => (a -> b) -> [a] -> [a]
 maximaby f [] = []
 maximaBy f xs = [x | x <- xs, f x == maximum (map f xs)]
 
---optAlignments :: String -> String -> [AlignmentType]
---optAlignments [] _ = [("","")]
---optAlignments _ [] = [("","")]
---optAlignments s1 s2 = [x | x <- combinations s1 s2, (correctForm similarityScore x) == similarityScore s1 s2]
-
 outputOptAlignments string1 string2 = do
 	putStrLn ("There are " ++ ( show (length (snd alig))) ++ " optimal solutions")
 	putStrLn $ printAligs $ snd alig
@@ -100,5 +90,4 @@ outputOptAlignments string1 string2 = do
 
 printAligs :: [AlignmentType] -> String
 printAligs [] = []
-printAligs (a:as) = ("\n" ++ (fst a) ++ "\n" ++ (snd a)) ++ printAligs as
- 
+printAligs (a:as) = "\n" ++ (fst a) ++ "\n" ++ (snd a) ++ printAligs as 
