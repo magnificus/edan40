@@ -37,8 +37,7 @@ rulesApply :: [PhrasePair] -> Phrase -> Phrase
 rulesApply = try . transformationsApply "*" reflect
 
 reflect :: Phrase -> Phrase
-reflect [] = []
-reflect (p:ps) = try (flip lookup reflections) p : reflect ps
+reflect = map $ try $ flip lookup reflections
 
 reflections =
   [ ("am",     "are"),
@@ -138,9 +137,8 @@ singleWildcardMatch (wc:ps) (s:ss) = match wc ps ss >> return [s]
 
 -- Applying a single pattern
 transformationApply :: Eq a => a -> ([a] -> [a]) -> [a] -> ([a], [a]) -> Maybe [a]
-transformationApply wc f s map = mmap (substitute wc $ snd map) (mmap f $ match wc (fst map) s)
+transformationApply wc f s map = mmap (substitute wc (snd map) . f) (match wc (fst map) s)
 
 -- Applying a list of patterns until one succeeds
 transformationsApply :: Eq a => a -> ([a] -> [a]) -> [([a], [a])] -> [a] -> Maybe [a]
-transformationsApply _ _ [] _ = Nothing
-transformationsApply wc f (p:ps) l = orElse (transformationApply wc f l p) (transformationsApply wc f ps l)
+transformationsApply wc f p l = foldr1 orElse $ map (transformationApply wc f l) p
