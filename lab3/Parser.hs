@@ -22,14 +22,17 @@ m -# n = error "-# not implemented"
 (#-) :: Parser a -> Parser b -> Parser a
 m #- n = error "#- not implemented"
 
+space :: Parser Char
+space = (char ? isAlpha)
+
 spaces :: Parser String
-spaces =  error "spaces not implemented"
+spaces =  iter space
 
 token :: Parser a -> Parser a
 token m = m #- spaces
 
 letter :: Parser Char
-letter =  error "letter not implemented"
+letter = (char ? isAlpha)
 
 word :: Parser String
 word = token (letter # iter letter >-> cons)
@@ -58,3 +61,8 @@ number' n = digitVal #> (\ d -> number' (10*n+d))
 number :: Parser Integer
 number = token (digitVal #> number')
 
+
+--semicolon :: Parser Char
+--semicolon (x:xs) = 
+--semicolon "; skip" -> Just(’;’, " skip")
+--semicolon "skip" -> Nothing
