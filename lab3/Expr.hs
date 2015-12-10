@@ -71,7 +71,14 @@ shw prec (Mul t u) = parens (prec>6) (shw 6 t ++ "*" ++ shw 6 u)
 shw prec (Div t u) = parens (prec>6) (shw 6 t ++ "/" ++ shw 7 u)
 
 value :: Expr -> Dictionary.T String Integer -> Integer
-value (Num n) _ = error "value not implemented"
+value (Add a b) d = value a d + value b d
+value (Sub a b) d = value a d - value b d
+value (Mul a b) d = value a d * value b d
+value (Div a b) d 
+	| b == 0 (||) a == 0 err "Division by 0"
+	| otherwise = value a d / value b d
+value (Num n) _ = n
+
 
 instance Parse Expr where
     parse = expr

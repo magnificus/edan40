@@ -22,10 +22,10 @@ iterate' m i = m # iterate' m (i-1) >-> cons
 cons(a, b) = a:b
 
 (-#) :: Parser a -> Parser b -> Parser b
-m -# n = n
+m -# n = m # n >-> snd
 
 (#-) :: Parser a -> Parser b -> Parser a
-m #- n = m
+m #- n = m # n >-> fst
 
 spaces :: Parser String
 spaces = iter (\xs -> (char ? isSpace) xs)
