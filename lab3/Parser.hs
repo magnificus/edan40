@@ -14,19 +14,21 @@ err message cs = error (message++" near "++cs++"\n")
 iter :: Parser a -> Parser [a]  
 iter m = m # iter m >-> cons ! return [] 
 
+iterate' :: Parser a -> Int -> Parser [a]
+iterate' m 0 = return []
+iterate' m i = m # iterate' m (i-1) >-> cons
+
+
 cons(a, b) = a:b
 
 (-#) :: Parser a -> Parser b -> Parser b
-m -# n = error "-# not implemented"
+m -# n = n
 
 (#-) :: Parser a -> Parser b -> Parser a
-m #- n = error "#- not implemented"
-
-space :: Parser Char
-space = (char ? isSpace)
+m #- n = m
 
 spaces :: Parser String
-spaces =  iter space
+spaces = iter (\xs -> (char ? isSpace) xs)
 
 token :: Parser a -> Parser a
 token m = m #- spaces
@@ -38,13 +40,16 @@ word :: Parser String
 word = token (letter # iter letter >-> cons)
 
 chars :: Int -> Parser String
-chars n =  error "chars not implemented"
+chars = iterate' letter
 
 accept :: String -> Parser String
-accept w = (token (chars (length w))) ? (==w)
+accept w = token (chars $ length w) ? (==w)
+
 
 require :: String -> Parser String
-require w  = error "require not implemented"
+require a b 
+	| accept a b == Nothing = err a b
+	| otherwise = Nothing
 
 lit :: Char -> Parser Char
 lit c = token char ? (==c)
@@ -60,9 +65,3 @@ number' n = digitVal #> (\ d -> number' (10*n+d))
           ! return n
 number :: Parser Integer
 number = token (digitVal #> number')
-
-
---semicolon :: Parser Char
---semicolon (x:xs) = 
---semicolon "; skip" -> Just(’;’, " skip")
---semicolon "skip" -> Nothing
