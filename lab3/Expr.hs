@@ -71,13 +71,28 @@ shw prec (Mul t u) = parens (prec>6) (shw 6 t ++ "*" ++ shw 6 u)
 shw prec (Div t u) = parens (prec>6) (shw 6 t ++ "/" ++ shw 7 u)
 
 value :: Expr -> Dictionary.T String Integer -> Integer
+value (Num n) _ = n
 value (Add a b) d = value a d + value b d
 value (Sub a b) d = value a d - value b d
 value (Mul a b) d = value a d * value b d
-value (Div a b) d 
-	| b == 0 (||) a == 0 err "Division by 0"
-	| otherwise = value a d / value b d
-value (Num n) _ = n
+value (Div a b) d =
+	case k of
+		0 -> error "Division by 0"
+		k -> value a d `div` k
+		_ -> error "what"
+		where k = value b d 
+--	| value u d == 0 = error "division by 0"
+--	| otherwise = value t d `div` value u d
+
+value (Var v) d = 
+	case k of
+		Nothing -> error "No such variable"
+		Just k -> k
+		_ -> error "what"
+		where k = Dictionary.lookup v d
+
+
+
 
 
 instance Parse Expr where
