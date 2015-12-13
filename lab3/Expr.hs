@@ -79,18 +79,13 @@ value (Div a b) d =
 	case k of
 		0 -> error "Division by 0"
 		k -> value a d `div` k
-		_ -> error "This shouldn't happen"
 		where k = value b d 
 
 value (Var v) d = 
 	case k of
 		Nothing -> error "No such variable"
 		Just k -> k
-		_ -> error "what"
 		where k = Dictionary.lookup v d
-
-
-
 
 
 instance Parse Expr where
