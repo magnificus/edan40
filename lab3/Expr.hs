@@ -79,10 +79,8 @@ value (Div a b) d =
 	case k of
 		0 -> error "Division by 0"
 		k -> value a d `div` k
-		_ -> error "what"
+		_ -> error "This shouldn't happen"
 		where k = value b d 
---	| value u d == 0 = error "division by 0"
---	| otherwise = value t d `div` value u d
 
 value (Var v) d = 
 	case k of

@@ -40,16 +40,14 @@ word :: Parser String
 word = token (letter # iter letter >-> cons)
 
 chars :: Int -> Parser String
-chars = iterate' letter
+chars = iterate' char
 
 accept :: String -> Parser String
 accept w = token (chars $ length w) ? (==w)
 
 
 require :: String -> Parser String
-require a b 
-	| accept a b == Nothing = err a b
-	| otherwise = Nothing
+require a = (accept a ! err a)
 
 lit :: Char -> Parser Char
 lit c = token char ? (==c)
